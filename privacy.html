@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pointfix privacy policy</title>
+  <meta name="description" content="Privacy policy for the Pointfix Chrome extension and its local helper.">
+  <style>
+    :root { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #475569; --border: #e2e8f0; --accent: #2563eb; --code: #f1f5f9; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #020617; --card: #0f172a; --text: #e2e8f0; --muted: #94a3b8; --border: #1e293b; --accent: #60a5fa; --code: #1e293b; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 720px; margin: 0 auto; padding: 48px 16px 72px; }
+    header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    header img { width: 44px; height: 44px; border-radius: 10px; }
+    h1 { font-size: 30px; line-height: 1.2; margin: 0; }
+    .updated { color: var(--muted); margin: 0 0 32px; }
+    section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; }
+    h2 { font-size: 18px; margin: 0 0 8px; }
+    p { margin: 8px 0; }
+    ul { margin: 8px 0; padding-left: 22px; }
+    li { margin: 4px 0; }
+    code { font: 14px ui-monospace, Menlo, monospace; background: var(--code); padding: 1px 5px; border-radius: 4px; }
+    a { color: var(--accent); }
+    strong { font-weight: 650; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <img src="icon128.png" alt="">
+      <h1>Pointfix privacy policy</h1>
+    </header>
+    <p class="updated">Last updated: 23 October 2026</p>
+
+    <section>
+      <h2>What Pointfix does</h2>
+      <p>When you click the toolbar icon, Pointfix lets you select an element on the current page and send a request about it to a coding agent (Claude Code or OpenAI Codex) that <strong>you</strong> have installed and signed in to on your own computer.</p>
+    </section>
+
+    <section>
+      <h2>Data Pointfix handles</h2>
+      <p>When you press <strong>Send</strong> or <strong>Copy prompt</strong>, Pointfix collects, from the current tab only:</p>
+      <ul>
+        <li>the page address (URL)</li>
+        <li>the selected elements' HTML, visible text, CSS selector, size, position and a few computed styles</li>
+        <li>the name of the UI component and its source-file location, when the page is a development build that exposes it</li>
+        <li>a screenshot of each selected element</li>
+        <li>the viewport size, and, if you leave "Include page errors" checked, uncaught JavaScript errors and the addresses of failed requests on the page</li>
+        <li>the message you typed and the project folder path you chose</li>
+      </ul>
+      <p>Nothing is collected until you open the picker on a tab, and nothing is sent until you press Send.</p>
+    </section>
+
+    <section>
+      <h2>Where the data goes</h2>
+      <p>This data is passed to a helper program on your computer, which you install yourself (<code>npx pointfix install</code>). The helper hands it to the Claude Code or Codex command-line tool you chose. That tool then sends it to its provider, Anthropic or OpenAI, under <strong>your own account</strong> and that provider's terms and privacy policy:</p>
+      <ul>
+        <li>Anthropic: <a href="https://www.anthropic.com/legal/privacy">anthropic.com/legal/privacy</a></li>
+        <li>OpenAI: <a href="https://openai.com/policies/privacy-policy">openai.com/policies/privacy-policy</a></li>
+      </ul>
+      <p>The developer of Pointfix runs <strong>no servers</strong> and receives <strong>none</strong> of this data. Pointfix contains no analytics, tracking or advertising, and the data is never sold or shared with anyone else.</p>
+    </section>
+
+    <section>
+      <h2>Data stored on your device</h2>
+      <p>Pointfix saves, in Chrome's local extension storage on your computer:</p>
+      <ul>
+        <li>the project folder for each website, your chosen agent and mode, and the panel position</li>
+        <li>conversation IDs, so follow-up messages continue the same conversation</li>
+        <li>your last 20 chats per site (your messages, the agent's replies and the change lists, without screenshots), so you can reopen them</li>
+      </ul>
+      <p>Screenshots are written to a temporary file for the agent to read and deleted when the request finishes. To show and undo changes, the helper records snapshots of your project folder with git: inside your repository's own object store for git projects, or in <code>~/.pointfix/snapshots/</code> for other folders. These never leave your computer.</p>
+      <p>Removing the extension deletes its stored data. Running <code>npx pointfix uninstall</code> removes the helper and its snapshots.</p>
+    </section>
+
+    <section>
+      <h2>Permissions</h2>
+      <ul>
+        <li><strong>activeTab, scripting:</strong> run the element picker on the current tab, only after you click the toolbar icon or press the shortcut</li>
+        <li><strong>nativeMessaging:</strong> talk to the helper program on your computer</li>
+        <li><strong>storage:</strong> remember the settings and chats listed above</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Contact</h2>
+      <p>Questions about this policy: <a href="mailto:ashisharora4063@gmail.com">ashisharora4063@gmail.com</a></p>
+    </section>
+  </main>
+</body>
+</html>
