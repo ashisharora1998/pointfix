@@ -43,6 +43,7 @@
       .row label { flex: 1; }
       label { display: flex; flex-direction: column; gap: 2px; color: #475569; font-size: 12px; }
       input, select, textarea { width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #0f172a; }
+      select { appearance: none; padding-right: 28px; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23475569' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center / 10px 6px; }
       textarea { resize: vertical; min-height: 60px; }
       input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid #2563eb; outline-offset: 1px; }
       .field { display: flex; flex-direction: column; gap: 2px; }
@@ -134,6 +135,7 @@
         .compare-grid canvas { border-color: #334155; }
         .spinner, .mini-spinner { border-color: #334155; border-top-color: #60a5fa; }
         input, select, textarea, button { background: #1e293b; color: #e2e8f0; border-color: #334155; }
+        select { background: #1e293b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center / 10px 6px; }
         button.icon { background: transparent; }
         .msg { background: #1e293b; }
         .msg.you { background: #1e3a8a; }

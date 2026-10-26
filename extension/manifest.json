@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Pointfix: fix your UI with Claude Code or Codex",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Point at any element on a page, describe the change, and send it to Claude Code or OpenAI Codex running on your own machine.",
   "minimum_chrome_version": "116",
   "action": {
