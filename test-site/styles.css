@@ -1,0 +1,17 @@
+body { margin: 0; font-family: system-ui, sans-serif; color: #1f2937; background: #ffffff; }
+.site-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; background: #111827; color: #ffffff; }
+.site-header a { color: #d1d5db; margin-left: 16px; }
+.logo { font-weight: 700; }
+main { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+main h2 { font-family: Roboto, sans-serif; font-style: italic; }
+.hero-title { font-size: 40px; margin: 24px 0 8px; }
+.hero-subtitle { color: #6b7280; }
+.cta { padding: 10px 18px; border: none; border-radius: 4px; background: #2563eb; color: #ffffff; font-size: 16px; }
+.cards { display: flex; gap: 12px; flex-wrap: wrap; }
+.price-card { flex: 1 1 200px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; }
+.price-card .price { font-size: 28px; font-weight: 700; }
+.price-card:first-child .price { color: #16a34a; }
+.price-card:nth-child(2) .price { color: #16a34a; }
+.price-card:last-child .price { color: #dc2626; }
+.price-card:last-child .plan { color: #eab308; }
+.price-card .choose { background: #2563eb; color: #ffffff; }

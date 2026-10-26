@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pointfix setup</title>
+  <style>
+    :root {
+      --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #475569; --border: #e2e8f0;
+      --accent: #2563eb; --ok: #15803d; --bad: #b91c1c; --code: #f1f5f9;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #020617; --card: #0f172a; --text: #e2e8f0; --muted: #94a3b8; --border: #1e293b; --accent: #60a5fa; --ok: #4ade80; --bad: #f87171; --code: #1e293b; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 680px; margin: 0 auto; padding: 40px 16px 64px; }
+    h1 { font-size: 26px; margin: 0 0 4px; }
+    .lead { color: var(--muted); margin: 0 0 28px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; }
+    .step { display: flex; gap: 14px; align-items: flex-start; }
+    .icon { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; border: 2px solid var(--border); color: var(--muted); }
+    .ok .icon { border-color: var(--ok); color: var(--ok); }
+    .bad .icon { border-color: var(--bad); color: var(--bad); }
+    .step h2 { font-size: 16px; margin: 1px 0 4px; }
+    .step p { margin: 4px 0; color: var(--muted); }
+    .state { font-weight: 600; }
+    .ok .state { color: var(--ok); }
+    .bad .state { color: var(--bad); }
+    pre { margin: 8px 0; padding: 10px 12px; background: var(--code); border-radius: 8px; overflow-x: auto; font: 13px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; word-break: break-all; }
+    button { font: inherit; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    kbd { font: 13px ui-monospace, Menlo, monospace; padding: 1px 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; background: var(--code); }
+    ul { margin: 6px 0 0; padding-left: 20px; color: var(--muted); }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Pointfix setup</h1>
+    <p class="lead">Point at anything on a page, say what to change, and your own Claude Code or Codex edits the code. Free: it uses your existing subscription.</p>
+
+    <section class="card step" id="helper-step">
+      <span class="icon" aria-hidden="true">1</span>
+      <div>
+        <h2>Local helper <span class="state" id="helper-state">Checking…</span></h2>
+        <p>A small program on your computer that runs Claude Code or Codex for the extension. Install it once in a terminal (requires Node.js 18+):</p>
+        <pre id="install-cmd"></pre>
+        <div class="row">
+          <button type="button" id="copy">Copy command</button>
+          <span id="copied" role="status"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card step" id="agent-step">
+      <span class="icon" aria-hidden="true">2</span>
+      <div>
+        <h2>Claude Code or Codex <span class="state" id="agent-state">Waiting for the helper…</span></h2>
+        <p>You need at least one, installed and signed in:</p>
+        <ul id="agent-list">
+          <li><strong>Claude Code</strong>: install from <a href="https://claude.com/claude-code" target="_blank" rel="noopener">claude.com/claude-code</a>, then run <code>claude</code> and type <code>/login</code>.</li>
+          <li><strong>Codex</strong>: the ChatGPT app for Mac already includes it. Otherwise run <code>npm install -g @openai/codex</code>, then <code>codex</code> to sign in with ChatGPT.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card step" id="use-step">
+      <span class="icon" aria-hidden="true">3</span>
+      <div>
+        <h2>Use it</h2>
+        <p>Open your app (for example <code>http://localhost:3000</code>), then click the toolbar icon or press <kbd id="shortcut">Alt+Shift+E</kbd>.</p>
+        <ul>
+          <li>Click an element to select it. <kbd>↑</kbd> / <kbd>↓</kbd> moves to the parent or child, <kbd>Shift</kbd>+click selects several.</li>
+          <li>Enter the project folder that holds the site's code, type what to change, and press Send.</li>
+          <li>Every change can be undone from the panel.</li>
+          <li>To fix the phone layout, open DevTools' device toolbar (<kbd>⌘⇧M</kbd> / <kbd>Ctrl+Shift+M</kbd>) before picking.</li>
+        </ul>
+      </div>
+    </section>
+
+    <div class="row">
+      <button type="button" class="primary" id="recheck">Check again</button>
+    </div>
+  </main>
+  <script src="setup.js"></script>
+</body>
+</html>

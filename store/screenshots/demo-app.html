@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Acme Analytics</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: -apple-system, system-ui, sans-serif; color: #0f172a; background: #f8fafc; height: 100vh; overflow: hidden; }
+  body.panel-only { background: transparent; }
+  body.panel-only .site { visibility: hidden; }
+  nav { display: flex; align-items: center; gap: 28px; padding: 18px 40px; background: #fff; border-bottom: 1px solid #e2e8f0; }
+  .logo { font-weight: 800; font-size: 20px; display: flex; align-items: center; gap: 8px; }
+  .logo i { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, #2563eb, #7c3aed); display: inline-block; }
+  nav a { color: #475569; text-decoration: none; font-size: 15px; }
+  .hero { padding: 64px 40px 0; max-width: 820px; }
+  .badge { display: inline-block; font-size: 13px; font-weight: 600; color: #1d4ed8; background: #dbeafe; padding: 4px 10px; border-radius: 999px; margin-bottom: 18px; }
+  h1 { font-size: 50px; line-height: 1.08; letter-spacing: -1.2px; margin-bottom: 18px; }
+  .sub { font-size: 19px; color: #475569; line-height: 1.5; margin-bottom: 30px; max-width: 560px; }
+  .ctas { display: flex; align-items: center; gap: 18px; }
+  .hero-cta { border: none; border-radius: 8px; background: #2563eb; color: #fff; font-size: 17px; font-weight: 600; padding: 14px 28px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35); font-family: inherit; }
+  .demo-link { color: #0f172a; font-weight: 600; font-size: 16px; }
+  .dash { margin: 46px 40px 0; width: 740px; height: 300px; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); padding: 22px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: 70px 1fr; gap: 16px; }
+  .kpi { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; }
+  .kpi small { color: #64748b; font-size: 12px; }
+  .kpi b { display: block; font-size: 22px; margin-top: 4px; }
+  .chart { grid-column: 1 / -1; border-radius: 10px; background: linear-gradient(180deg, rgba(37, 99, 235, 0.12), rgba(37, 99, 235, 0)); position: relative; overflow: hidden; }
+  .chart svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+  <div class="site">
+    <nav><span class="logo"><i></i>Acme</span><a href="#">Product</a><a href="#">Pricing</a><a href="#">Docs</a><a href="#">Customers</a></nav>
+    <section class="hero">
+      <span class="badge">New: real-time dashboards</span>
+      <h1>Analytics your whole team will actually use</h1>
+      <p class="sub">Track every metric that matters, share live dashboards, and get answers in seconds, not sprints.</p>
+      <div class="ctas"><button class="hero-cta">Get started</button><a class="demo-link" href="#">Book a demo →</a></div>
+    </section>
+    <div class="dash">
+      <div class="kpi"><small>Active users</small><b>48,210</b></div>
+      <div class="kpi"><small>Conversion</small><b>6.4%</b></div>
+      <div class="kpi"><small>Revenue</small><b>$128k</b></div>
+      <div class="chart"><svg viewBox="0 0 700 150" preserveAspectRatio="none"><polyline fill="none" stroke="#2563eb" stroke-width="3" points="0,120 70,105 140,112 210,80 280,88 350,60 420,70 490,42 560,50 630,24 700,30"/></svg></div>
+    </div>
+  </div>
+
+<script>
+// Staging only: open the shadow root so the screenshot can show the diff expanded.
+const attach = Element.prototype.attachShadow;
+Element.prototype.attachShadow = function (o) { return attach.call(this, { ...o, mode: 'open' }); };
+if (location.hash === '#panel') {
+  document.body.classList.add('panel-only');
+  // The tall capture window is 1010px high; report the normal viewport size.
+  Object.defineProperty(window, 'innerHeight', { get: () => 800 });
+}
+
+function buttonImage(style) {
+  const c = document.createElement('canvas');
+  c.width = style.w + 16; c.height = style.h + 16;
+  const g = c.getContext('2d');
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
+  if (style.shadow) { g.shadowColor = 'rgba(37,99,235,0.35)'; g.shadowBlur = 12; g.shadowOffsetY = 3; }
+  g.fillStyle = style.bg;
+  g.beginPath(); g.roundRect(8, 8, style.w, style.h, style.r); g.fill();
+  g.shadowColor = 'transparent';
+  g.fillStyle = '#ffffff'; g.font = `600 ${style.font}px -apple-system, system-ui, sans-serif`;
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('Get started', 8 + style.w / 2, 8 + style.h / 2 + 1);
+  return c.toDataURL('image/png').split(',')[1];
+}
+
+const history = [
+  { kind: 'you', text: 'Use our brand blue and make it stand out more' },
+  { kind: 'tool', text: '▸ Edit src/styles/hero.css' },
+  { kind: 'agent', text: 'Updated the **Get started** button in `src/styles/hero.css`:\n\n- background is now the brand blue `#2563eb`\n- padding increased to `14px 28px`, with a soft shadow' },
+  { kind: 'changes', text: '', data: { projectDir: '/Users/you/Projects/acme-web', before: 'a'.repeat(40), after: 'b'.repeat(40), files: [{ status: 'M', path: 'src/styles/hero.css' }],
+    diff: '@@ -12,5 +12,6 @@ .hero-cta {\n-  background: #94a3b8;\n-  padding: 8px 14px;\n+  background: #2563eb;\n+  padding: 14px 28px;\n+  box-shadow: 0 4px 14px rgba(37, 99, 235, .35);\n   border-radius: 8px;' } },
+  { kind: 'done', text: 'Done. Reloading the page to show the changes…' },
+  { kind: 'compare', text: '', data: { pairs: [{
+    before: buttonImage({ w: 114, h: 38, r: 6, bg: '#94a3b8', font: 15 }),
+    after: buttonImage({ w: 137, h: 50, r: 8, bg: '#2563eb', font: 17, shadow: true }),
+    found: true,
+  }] } },
+];
+
+const noop = { addListener() {} };
+window.chrome = {
+  runtime: {
+    id: 'pointfixstaging',
+    async sendMessage(m) {
+      if (m.type === 'takeRestoreState') return { origin: location.origin, history, selectors: ['button.hero-cta'], contextSent: true, chatId: 'demo' };
+      return null;
+    },
+    connect: () => ({ postMessage() {}, onMessage: noop, onDisconnect: noop }),
+  },
+  storage: { local: {
+    get: async () => ({ [`folder:${location.origin}`]: '/Users/you/Projects/acme-web', agent: 'claude', mode: 'edit' }),
+    set: async () => {}, remove: async () => {},
+  } },
+};
+</script>
+<script src="../../extension/markdown.js"></script>
+<script src="../../extension/picker.js"></script>
+<script>
+// After the panel renders: open the diff, scroll the chat to the end.
+setTimeout(() => {
+  const root = document.querySelector('pointfix-overlay').shadowRoot;
+  const panelOnly = location.hash === '#panel';
+  root.querySelector('details').open = panelOnly; // diff expanded only in the tall panel shot
+  const style = document.createElement('style');
+  style.textContent = '.log { max-height: none !important; }' + (panelOnly ? '.sel-layer { display: none; } .panel { top: 16px !important; bottom: auto !important; right: 16px !important; left: auto !important; }' : '');
+  root.append(style);
+  const log = root.querySelector('.log');
+  setTimeout(() => { log.scrollTop = log.scrollHeight; }, 600);
+}, 400);
+</script>
+</body>
+</html>

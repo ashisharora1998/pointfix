@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Acme Analytics</title>
+<!--
+  Staged page for the Pointfix demo video (see record.js). It runs the real
+  extension/picker.js with a scripted stand-in for the Chrome APIs and the
+  agent, and draws a fake browser toolbar plus a visible mouse cursor.
+-->
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: -apple-system, system-ui, sans-serif; color: #0f172a; background: #f8fafc; height: 100vh; overflow: hidden; }
+
+  .browser { height: 52px; display: flex; align-items: center; gap: 14px; padding: 0 16px; background: #dee1e6; border-bottom: 1px solid #c4c7cc; }
+  .lights { display: flex; gap: 8px; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .address { flex: 1; height: 32px; border-radius: 16px; background: #fff; display: flex; align-items: center; padding: 0 16px; font-size: 14px; color: #3c4043; }
+  .address b { font-weight: 400; color: #80868b; margin-right: 2px; }
+  .ext { position: relative; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+  .ext:hover, .ext.active { background: rgba(60, 64, 67, 0.12); }
+  .ext img { width: 20px; height: 20px; border-radius: 4px; }
+  .badge { position: absolute; right: -2px; bottom: -1px; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px; background: #16a34a; color: #fff; font: 700 11px/16px system-ui; text-align: center; display: none; }
+  .badge.on { display: block; }
+  .ghost { width: 20px; height: 20px; border-radius: 50%; background: #bdc1c6; }
+
+  nav { display: flex; align-items: center; gap: 28px; padding: 16px 40px; background: #fff; border-bottom: 1px solid #e2e8f0; }
+  .logo { font-weight: 800; font-size: 20px; display: flex; align-items: center; gap: 8px; }
+  .logo i { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, #2563eb, #7c3aed); display: inline-block; }
+  nav a { color: #475569; text-decoration: none; font-size: 15px; }
+  .hero { padding: 52px 40px 0; max-width: 820px; }
+  .pill { display: inline-block; font-size: 13px; font-weight: 600; color: #1d4ed8; background: #dbeafe; padding: 4px 10px; border-radius: 999px; margin-bottom: 18px; }
+  h1 { font-size: 48px; line-height: 1.08; letter-spacing: -1.2px; margin-bottom: 18px; }
+  .sub { font-size: 19px; color: #475569; line-height: 1.5; margin-bottom: 28px; max-width: 560px; }
+  .ctas { display: flex; align-items: center; gap: 18px; }
+  /* "Before": the agent's edit swaps this for the brand style below. */
+  .hero-cta { border: none; border-radius: 6px; background: #94a3b8; color: #fff; font: 600 15px -apple-system, system-ui, sans-serif; padding: 8px 14px; }
+  body.changed .hero-cta { border-radius: 8px; background: #2563eb; font-size: 17px; padding: 14px 28px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35); }
+  .demo-link { color: #0f172a; font-weight: 600; font-size: 16px; }
+  .dash { margin: 40px 40px 0; width: 740px; height: 250px; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); padding: 22px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: 66px 1fr; gap: 16px; }
+  .kpi { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; }
+  .kpi small { color: #64748b; font-size: 12px; }
+  .kpi b { display: block; font-size: 22px; margin-top: 4px; }
+  .chart { grid-column: 1 / -1; border-radius: 10px; background: linear-gradient(180deg, rgba(37, 99, 235, 0.12), rgba(37, 99, 235, 0)); position: relative; overflow: hidden; }
+  .chart svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  #cursor { position: fixed; left: 0; top: 0; z-index: 2147483647; pointer-events: none; width: 22px; height: 30px; transform: translate(900px, 520px); transition: scale 0.08s; transform-origin: 0 0; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35)); }
+  #cursor.down { scale: 0.85; }
+  #endcard { position: fixed; inset: 0; z-index: 2147483647; opacity: 0; transition: opacity 0.6s; pointer-events: none; }
+  #endcard.on { opacity: 1; }
+  #endcard img { width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+  <div class="browser">
+    <span class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></span>
+    <span class="address"><b>localhost</b>:4321</span>
+    <span class="ext"><span class="ghost"></span></span>
+    <span class="ext" id="pointfix-icon" title="Pointfix"><img src="../../extension/icons/icon32.png" alt=""><span class="badge">✓</span></span>
+  </div>
+  <nav><span class="logo"><i></i>Acme</span><a href="#">Product</a><a href="#">Pricing</a><a href="#">Docs</a><a href="#">Customers</a></nav>
+  <section class="hero">
+    <span class="pill">New: real-time dashboards</span>
+    <h1>Analytics your whole team will actually use</h1>
+    <p class="sub">Track every metric that matters, share live dashboards, and get answers in seconds, not sprints.</p>
+    <div class="ctas"><button class="hero-cta">Get started</button><a class="demo-link" href="#">Book a demo →</a></div>
+  </section>
+  <div class="dash">
+    <div class="kpi"><small>Active users</small><b>48,210</b></div>
+    <div class="kpi"><small>Conversion</small><b>6.4%</b></div>
+    <div class="kpi"><small>Revenue</small><b>$128k</b></div>
+    <div class="chart"><svg viewBox="0 0 700 150" preserveAspectRatio="none"><polyline fill="none" stroke="#2563eb" stroke-width="3" points="0,120 70,105 140,112 210,80 280,88 350,60 420,70 490,42 560,50 630,24 700,30"/></svg></div>
+  </div>
+  <svg id="cursor" viewBox="0 0 22 30"><path d="M1 1 L1 23 L6.5 18 L10 27 L14 25.5 L10.5 16.5 L17.5 16.5 Z" fill="#000" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+  <div id="endcard"><img src="../screenshots/screenshot-1.png" alt=""></div>
+
+<script>
+// Video only: open the panel's shadow root so the recorder can find its buttons.
+const attach = Element.prototype.attachShadow;
+Element.prototype.attachShadow = function (o) { return attach.call(this, { ...o, mode: 'open' }); };
+
+const ss = sessionStorage;
+const read = (k, d) => JSON.parse(ss.getItem(k) || JSON.stringify(d));
+const write = (k, v) => ss.setItem(k, JSON.stringify(v));
+if (ss.getItem('changed')) document.body.classList.add('changed');
+
+// Visible cursor: follows real mouse events (the recorder sends them through CDP).
+const cursor = document.getElementById('cursor');
+addEventListener('mousemove', (e) => { cursor.style.transform = `translate(${e.clientX - 1}px, ${e.clientY - 1}px)`; }, true);
+addEventListener('pointerdown', () => cursor.classList.add('down'), true);
+addEventListener('pointerup', () => cursor.classList.remove('down'), true);
+// Keep the cursor and end card above the panel, which mounts on <html> later.
+const endcard = document.getElementById('endcard');
+new MutationObserver(() => {
+  if (document.documentElement.lastElementChild !== endcard) document.documentElement.append(cursor, endcard);
+}).observe(document.documentElement, { childList: true });
+
+// Toolbar badge, as the extension's background worker would show it.
+const icon = document.getElementById('pointfix-icon');
+const badge = icon.querySelector('.badge');
+if (ss.getItem('badge')) badge.classList.add('on');
+
+// Draws what the element looks like, standing in for chrome.tabs.captureVisibleTab.
+function snapshot(rect) {
+  const el = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  const cs = getComputedStyle(el);
+  const k = 2;
+  const pad = 8;
+  const c = document.createElement('canvas');
+  c.width = (rect.width + pad * 2) * k;
+  c.height = (rect.height + pad * 2) * k;
+  const g = c.getContext('2d');
+  g.scale(k, k);
+  g.fillStyle = '#f8fafc';
+  g.fillRect(0, 0, c.width, c.height);
+  if (cs.boxShadow !== 'none') { g.shadowColor = 'rgba(37,99,235,0.35)'; g.shadowBlur = 12; g.shadowOffsetY = 3; }
+  g.fillStyle = cs.backgroundColor;
+  g.beginPath();
+  g.roundRect(pad, pad, rect.width, rect.height, parseFloat(cs.borderRadius) || 0);
+  g.fill();
+  g.shadowColor = 'transparent';
+  g.fillStyle = cs.color;
+  g.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillText(el.textContent.trim(), pad + rect.width / 2, pad + rect.height / 2 + 1);
+  return c.toDataURL('image/png').split(',')[1];
+}
+
+// Scripted agent run: what Claude Code streams back for this request.
+// ?pace=2 stretches it to twice as long (the recorder fits it to the voice-over).
+const PACE = Number(new URLSearchParams(location.search).get('pace')) || 1;
+const listeners = [];
+const emit = (msg, at) => setTimeout(() => {
+  listeners.forEach((l) => l(msg));
+  if (msg.type === 'done') { badge.classList.add('on'); ss.setItem('badge', '1'); }
+}, at * PACE);
+const port = {
+  postMessage(m) {
+    if (m.type === 'detectProject') emit({ type: 'project', projectDir: '/Users/you/Projects/acme-web', port: 4321 }, 350);
+    if (m.type === 'run') {
+      emit({ type: 'session', sessionId: '11111111-2222-3333-4444-555555555555' }, 300);
+      emit({ type: 'tool', text: 'Read src/components/Hero.tsx' }, 1300);
+      emit({ type: 'tool', text: 'Edit src/styles/hero.css' }, 2600);
+      emit({ type: 'text', text: 'Updated the **Get started** button in `src/styles/hero.css`:\n\n- background is now the brand blue `#2563eb`\n- padding increased to `14px 28px`, with a soft shadow' }, 3700);
+      emit({ type: 'changes', projectDir: '/Users/you/Projects/acme-web', before: 'a'.repeat(40), after: 'b'.repeat(40), files: [{ status: 'M', path: 'src/styles/hero.css' }],
+        diff: '@@ -12,5 +12,6 @@ .hero-cta {\n-  background: #94a3b8;\n-  padding: 8px 14px;\n+  background: #2563eb;\n+  padding: 14px 28px;\n+  box-shadow: 0 4px 14px rgba(37, 99, 235, .35);\n   border-radius: 8px;' }, 4100);
+      emit({ type: 'done', edited: true, isError: false }, 4300);
+    }
+  },
+  onMessage: { addListener: (l) => listeners.push(l) },
+  onDisconnect: { addListener() {} },
+};
+
+window.chrome = {
+  runtime: {
+    id: 'pointfixdemo',
+    async sendMessage(m) {
+      if (m.type === 'takeRestoreState') { const s = read('restore', null); ss.removeItem('restore'); return s; }
+      if (m.type === 'reloadAfterEdit') { write('restore', m.state); ss.setItem('changed', '1'); setTimeout(() => location.reload(), 700); return null; }
+      if (m.type === 'capture') return { images: m.rects.map(snapshot) };
+      if (m.type === 'sourceHints') return { components: ['Hero', 'App'], sources: [] };
+      return null;
+    },
+    connect: () => port,
+  },
+  storage: { local: {
+    get: async (keys) => { const all = read('store', {}); const out = {}; for (const k of [].concat(keys)) if (k in all) out[k] = all[k]; return out; },
+    set: async (o) => write('store', { ...read('store', {}), ...o }),
+    remove: async (keys) => { const all = read('store', {}); for (const k of [].concat(keys)) delete all[k]; write('store', all); },
+  } },
+};
+
+// Clicking the toolbar icon injects the picker, like the extension does.
+function injectPicker() {
+  if (window.__pointfix) return window.__pointfix.start();
+  for (const src of ['../../extension/markdown.js', '../../extension/picker.js']) {
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = false;
+    document.body.append(s);
+  }
+}
+icon.addEventListener('click', () => {
+  badge.classList.remove('on');
+  ss.removeItem('badge');
+  injectPicker();
+});
+// After the edit reload the extension brings the panel back by itself.
+if (ss.getItem('restore')) injectPicker();
+
+window.__demo = {
+  reset() { ss.clear(); },
+  endCard() { document.getElementById('endcard').classList.add('on'); },
+};
+</script>
+</body>
+</html>

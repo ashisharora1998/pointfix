@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pointfix test site</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- React development build, so the picker can read component names -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <span class="logo">Acme</span>
+    <nav><a href="#">Pricing</a> <a href="#">Docs</a></nav>
+  </header>
+
+  <main>
+    <h1 class="hero-title">Ship faster with Acme</h1>
+    <p class="hero-subtitle">Plain HTML section — try picking this text.</p>
+    <button class="cta">Get started</button>
+
+    <h2>React section</h2>
+    <div id="react-root"></div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
