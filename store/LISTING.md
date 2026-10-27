@@ -16,7 +16,7 @@ HOW IT WORKS
 • Click the Pointfix icon (or press Alt+Shift+E) and hover to highlight any element on the page.
 • Click to select it. Use ↑ / ↓ to jump to the parent or child, or Shift+click to select several elements at once.
 • Type your request, e.g. "match this button to the header color" or "fix the spacing on mobile", or use a one-click quick action.
-• Pointfix sends the agent everything it needs: the CSS selector, HTML, text, styles, size, a screenshot, and on development builds the React, Vue or Svelte component and source file.
+• Pointfix sends the agent everything it needs: the CSS selector, HTML, text, styles, size, a screenshot, and on development builds the UI component and the source file it comes from.
 • The agent edits your code, the page reloads by itself, and you see the result.
 
 SEE AND UNDO EVERY CHANGE
@@ -27,8 +27,8 @@ SEE AND UNDO EVERY CHANGE
 
 BUILT FOR REAL PROJECTS
 • Finds your project folder automatically from your localhost dev server, or choose it with Browse.
-• Works with any stack: React, Vue, Svelte, Next.js, Vite, plain HTML and more.
-• Catches the page's errors as they happen: uncaught errors, unhandled promise rejections, console.error messages and failed requests. They show up in the panel with their stack traces, and go to the agent with your request, so "fix this" works for broken pages too.
+• Works with your existing project and framework. There's nothing to add to your code.
+• Catches the page's JavaScript errors and failed requests as they happen and shows them in the panel. They go to the agent with your request, so "fix this" works for broken pages too.
 • Fix phone layouts by picking elements in Chrome DevTools' device mode.
 • Follow-up messages continue the same conversation. Past chats are saved per site so you can pick up where you left off.
 • A ✓ on the toolbar icon tells you when a request is done, so you can keep working in other tabs.
