@@ -5,14 +5,15 @@
 // stdout: it carries the length-prefixed message protocol.
 'use strict';
 
-const { spawn, execFile } = require('child_process');
+const { spawn, execFile, execFileSync } = require('child_process');
 const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const VERSION = '0.2.3';
+const VERSION = '0.2.4';
 const HOME = os.homedir();
+const IS_WIN = process.platform === 'win32';
 const CONFIG_PATH = path.join(HOME, '.pointfix', 'config.json');
 const SNAPSHOT_ROOT = path.join(HOME, '.pointfix', 'snapshots');
 const IMAGE_DIR = path.join(os.tmpdir(), 'pointfix');
@@ -26,6 +27,23 @@ const DEFAULT_EXCLUDES = ['node_modules/', '.git/', 'dist/', 'build/', 'out/', '
 
 let child = null;
 let filesEdited = false; // whether the current run used a file-editing tool
+let stopped = false; // whether the user stopped the current run
+
+// On Windows the agent may run under cmd.exe (see command), and killing that
+// would leave the agent itself running, so end the whole process tree.
+function stopChild() {
+  if (!child) return;
+  stopped = true;
+  if (IS_WIN && child.pid) {
+    try {
+      execFileSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
+      return;
+    } catch {
+      // Already gone, or taskkill unavailable: fall back to kill.
+    }
+  }
+  child.kill('SIGTERM');
+}
 
 function send(msg) {
   const body = Buffer.from(JSON.stringify(msg));
@@ -48,12 +66,21 @@ function readConfig() {
 
 // Chrome launches hosts with a minimal PATH, so look in the usual install
 // locations as well as the path recorded by the installer.
+// On Windows, npm installs CLIs as .cmd shims next to an extensionless shell
+// script that Windows can't run, so only .exe and .cmd count.
+const WIN_EXTS = ['.exe', '.cmd'];
+
 function resolveBinary(name) {
   const configured = readConfig()[`${name}Path`];
-  if (configured && fs.existsSync(configured)) return configured;
-  const exe = process.platform === 'win32' ? `${name}.exe` : name;
+  if (configured) {
+    const tries = IS_WIN && !/\.(exe|cmd)$/i.test(configured) ? WIN_EXTS.map((e) => configured + e) : [configured];
+    const found = tries.find((p) => fs.existsSync(p));
+    if (found) return found;
+  }
+  const exes = IS_WIN ? WIN_EXTS.map((e) => name + e) : [name];
   const dirs = [
     ...(process.env.PATH || '').split(path.delimiter),
+    IS_WIN && process.env.APPDATA && path.join(process.env.APPDATA, 'npm'),
     path.join(HOME, '.local', 'bin'),
     path.join(HOME, '.claude', 'local'),
     path.join(HOME, '.npm-global', 'bin'),
@@ -68,10 +95,24 @@ function resolveBinary(name) {
     '/Applications/ChatGPT.app/Contents/Resources',
   ];
   for (const dir of dirs) {
-    const candidate = dir && path.join(dir, exe);
-    if (candidate && fs.existsSync(candidate)) return candidate;
+    if (!dir) continue;
+    for (const exe of exes) {
+      const candidate = path.join(dir, exe);
+      if (fs.existsSync(candidate)) return candidate;
+    }
   }
   return null;
+}
+
+// Node refuses to spawn .cmd/.bat files directly, so run them through cmd.exe
+// with every argument quoted and its metacharacters escaped (the same scheme
+// as the cross-spawn package). Returns [file, args, extra spawn options].
+function command(binary, args) {
+  if (!IS_WIN || !/\.(cmd|bat)$/i.test(binary)) return [binary, args, {}];
+  const meta = (s) => s.replace(/[()%!^"<>&|;, ]/g, '^$&');
+  const quote = (arg) => meta(`"${String(arg).replace(/(\\*)"/g, '$1$1\\"').replace(/(\\*)$/, '$1$1')}"`);
+  const line = [meta(binary), ...args.map(quote)].join(' ');
+  return [process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', `"${line}"`], { windowsVerbatimArguments: true }];
 }
 
 // Claude reads its login from the macOS keychain (by user name, through
@@ -92,7 +133,8 @@ function childEnv(binary, extra = {}) {
 
 function exec(file, args, options = {}, { withStderr = false } = {}) {
   return new Promise((resolve, reject) => {
-    execFile(file, args, { maxBuffer: 64 * 1024 * 1024, timeout: 60_000, ...options }, (err, stdout, stderr) => {
+    const [cmd, cmdArgs, extra] = command(file, args);
+    execFile(cmd, cmdArgs, { maxBuffer: 64 * 1024 * 1024, timeout: 60_000, ...extra, ...options }, (err, stdout, stderr) => {
       if (err) {
         err.stderr = String(stderr || '');
         reject(err);
@@ -174,13 +216,14 @@ async function detectProject(msg) {
 // the helper shows the operating system's own dialog.
 async function chooseFolder() {
   const reply = (fields) => send({ type: 'folderChosen', ...fields });
-  const prompt = 'Choose the project folder that contains this site’s code';
+  // Plain ASCII apostrophe: PowerShell treats curly quotes as string delimiters.
+  const prompt = "Choose the project folder that contains this site's code";
   let out;
   try {
     if (process.platform === 'darwin') {
       out = await exec('/usr/bin/osascript', ['-e', `POSIX path of (choose folder with prompt "${prompt}")`], { timeout: 600_000 });
     } else if (process.platform === 'win32') {
-      const ps = `Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.FolderBrowserDialog; $d.Description = '${prompt}'; if ($d.ShowDialog() -eq 'OK') { $d.SelectedPath }`;
+      const ps = `Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.FolderBrowserDialog; $d.Description = '${prompt.replace(/'/g, "''")}'; if ($d.ShowDialog() -eq 'OK') { $d.SelectedPath }`;
       out = await exec('powershell.exe', ['-NoProfile', '-STA', '-Command', ps], { timeout: 600_000 });
     } else {
       out = await exec('zenity', ['--file-selection', '--directory', `--title=${prompt}`], { timeout: 600_000 });
@@ -203,7 +246,9 @@ async function gitContext(projectDir) {
   const git = resolveBinary('git');
   if (!git) return null;
   try {
-    const top = (await exec(git, ['-C', projectDir, 'rev-parse', '--show-toplevel'])).trim();
+    // path.resolve turns git's forward slashes into backslashes on Windows, so
+    // paths built from it compare correctly in insideWorkTree.
+    const top = path.resolve((await exec(git, ['-C', projectDir, 'rev-parse', '--show-toplevel'])).trim());
     const gitDir = (await exec(git, ['-C', projectDir, 'rev-parse', '--absolute-git-dir'])).trim();
     return { git, workTree: top, prefix: ['-C', top], sharedIndex: path.join(gitDir, 'index') };
   } catch {
@@ -215,7 +260,7 @@ async function gitContext(projectDir) {
     fs.mkdirSync(path.join(gitDir, 'info'), { recursive: true });
     fs.writeFileSync(path.join(gitDir, 'info', 'exclude'), `${DEFAULT_EXCLUDES.join('\n')}\n`);
   }
-  return { git, workTree: projectDir, prefix: [`--git-dir=${gitDir}`, `--work-tree=${projectDir}`], sharedIndex: null };
+  return { git, workTree: path.resolve(projectDir), prefix: [`--git-dir=${gitDir}`, `--work-tree=${projectDir}`], sharedIndex: null };
 }
 
 function runGit(ctx, args, extraEnv = {}) {
@@ -276,9 +321,14 @@ async function undo(msg) {
     return reply({ ok: false, message: `Can't undo safely: these files changed again since: ${touchedSince.join(', ')}. Undo the later change first.` });
   }
 
+  // Check every path before writing anything, so undo never half-applies.
+  const outside = files.filter((f) => !insideWorkTree(ctx, f.path)).map((f) => f.path);
+  if (outside.length) {
+    return reply({ ok: false, message: `Can't undo: these paths are outside the project folder: ${outside.join(', ')}` });
+  }
+
   for (const file of files) {
     const full = insideWorkTree(ctx, file.path);
-    if (!full) continue;
     if (file.status === 'A') {
       fs.rmSync(full, { force: true });
     } else {
@@ -314,8 +364,9 @@ function validate(msg) {
   return null;
 }
 
-// Claude reads the prompt from stdin (see run) so text starting with "-"
-// can never be parsed as a flag.
+// Both agents read the prompt from stdin (see run), so text starting with "-"
+// can never be parsed as a flag and long prompts don't hit Windows' ~32 KB
+// command-line limit.
 function claudeArgs(msg, imagePaths) {
   const args = [
     '-p',
@@ -339,7 +390,7 @@ function codexArgs(msg, imagePaths) {
   for (const p of imagePaths) args.push('--image', p);
   args.push('--');
   if (msg.sessionId) args.push(msg.sessionId);
-  args.push(msg.prompt);
+  args.push('-'); // read the prompt from stdin (see run)
   return args;
 }
 
@@ -434,13 +485,14 @@ async function run(msg) {
   let finished = false;
   let buffered = '';
   let stderr = '';
-  const proc = spawn(binary, args, { cwd: msg.projectDir, env: childEnv(binary), stdio: [isClaude ? 'pipe' : 'ignore', 'pipe', 'pipe'] });
+  const [cmd, cmdArgs, extra] = command(binary, args);
+  const proc = spawn(cmd, cmdArgs, { cwd: msg.projectDir, env: childEnv(binary), stdio: ['pipe', 'pipe', 'pipe'], ...extra });
   child = proc;
-  if (isClaude) {
-    const shots = imagePaths.length ? `\n\nScreenshots of the selected elements, in order: ${imagePaths.join(', ')}` : '';
-    proc.stdin.on('error', () => {});
-    proc.stdin.end(msg.prompt + shots);
-  }
+  stopped = false;
+  // Codex gets the screenshots with --image; Claude reads them by path.
+  const shots = isClaude && imagePaths.length ? `\n\nScreenshots of the selected elements, in order: ${imagePaths.join(', ')}` : '';
+  proc.stdin.on('error', () => {});
+  proc.stdin.end(msg.prompt + shots);
 
   async function complete(result) {
     if (finished) return;
@@ -490,7 +542,8 @@ async function run(msg) {
   });
   proc.on('close', (code, signal) => {
     cleanup();
-    if (signal) complete({ isError: true, message: 'Stopped.' });
+    // Windows reports a killed process by exit code, not by signal.
+    if (signal || stopped) complete({ isError: true, message: 'Stopped.' });
     else complete({ isError: code !== 0, message: code !== 0 ? clip(stderr.trim() || `${msg.agent} exited with code ${code}.`) : undefined });
   });
 }
@@ -498,7 +551,7 @@ async function run(msg) {
 function handle(msg) {
   const fail = (err) => send({ type: 'error', message: err.message || String(err) });
   if (msg?.type === 'run') run(msg).catch(fail);
-  else if (msg?.type === 'cancel') child?.kill('SIGTERM');
+  else if (msg?.type === 'cancel') stopChild();
   else if (msg?.type === 'status') status().catch(fail);
   else if (msg?.type === 'detectProject') detectProject(msg).catch(() => send({ type: 'project', projectDir: null }));
   else if (msg?.type === 'chooseFolder') chooseFolder();
@@ -525,6 +578,6 @@ process.stdin.on('data', (chunk) => {
 });
 // Chrome closes stdin when the extension disconnects (tab closed, panel closed).
 process.stdin.on('end', () => {
-  child?.kill('SIGTERM');
+  stopChild();
   process.exit(0);
 });

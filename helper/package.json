@@ -1,6 +1,6 @@
 {
   "name": "pointfix",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Local helper for the Pointfix Chrome extension. Connects the extension to your own Claude Code or Codex CLI.",
   "keywords": [
     "pointfix",
