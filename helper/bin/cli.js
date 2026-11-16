@@ -51,7 +51,9 @@ const WIN_REGISTRY_KEYS = ['Google\\Chrome', 'Chromium', 'BraveSoftware\\Brave-B
 function which(name) {
   try {
     const out = execFileSync(IS_WIN ? 'where' : 'which', [name], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-    return out.split(/\r?\n/).find(Boolean) || null;
+    const lines = out.split(/\r?\n/).filter(Boolean);
+    // `where` also lists npm's extensionless shell script, which Windows can't run.
+    return (IS_WIN ? lines.find((l) => /\.(exe|cmd)$/i.test(l)) : lines[0]) || null;
   } catch {
     return null;
   }
@@ -170,7 +172,11 @@ function doctor() {
       continue;
     }
     try {
-      ok(true, `${name}: ${execFileSync(bin, ['--version'], { encoding: 'utf8' }).trim()}`);
+      // Node can only run a .cmd shim through the shell; the path is quoted for spaces.
+      const out = IS_WIN && /\.cmd$/i.test(bin)
+        ? execFileSync(`"${bin}" --version`, { encoding: 'utf8', shell: true })
+        : execFileSync(bin, ['--version'], { encoding: 'utf8' });
+      ok(true, `${name}: ${out.trim()}`);
     } catch (err) {
       ok(false, `${name}: ${bin} failed (${err.message})`);
     }
